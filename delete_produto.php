@@ -1,12 +1,13 @@
 <?php
     session_start();
 
+    require_once('conexao.php');
+
     if(!isset($_SESSION['adm_logado'])){
         header("Location:login.php");
         exit();
     }
 
-    require_once('conecta.php');
     
     $mensagem = '';
 
