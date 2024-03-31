@@ -14,7 +14,7 @@ CREATE TABLE PRODUTOS(
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(255),
     descricao TEXT,
-    preco DECIMAL,
-    imagem INT,
+    preco DECIMAL(10,2),
+    imagem VARCHAR(255),
     url_imagem VARCHAR(255)
 );

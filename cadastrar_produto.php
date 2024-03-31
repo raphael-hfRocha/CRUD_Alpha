@@ -2,66 +2,48 @@
 
 session_start();
 
-
-
-if(!isset($_SESSION['admin_logado'])){
-    header('Location:login.php');
-    exit();
-}
 require_once('conexao.php');
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // $_SERVER['REQUEST_METHOD']: Retorna o método usado para acessar a página
-
-
     $nome = $_POST['nome'];
-    $preco = $_POST['preco'];
+    $preco = str_replace(',', '.', $_POST['preco']);
     $descricao = $_POST['descricao'];
+    $imagemcompleta = $_FILES['imagem']['name'];
+    $imagem = $_FILES['imagem']['tmp_name'];
     $url_imagem = $_POST['url_imagem'];
 
-
-    $imagemcompleta = $_FILES['imagem'];
-    $imagem = $_FILES['imagem']['tmp_name'];
-
-    $target_dir = "./Uploads/";
+    $target_dir = "uploads/";
 
     // $target_file = $target_dir . basename($imagem); (Forma de atribuir a variável $target_file)
-    $target_file = $target_dir . $imagem;
+    $target_file = $target_dir . basename($imagem);
 
 
-    $base_url = "http://localhost/Alpha" . "Uploads/" . basename($imagem);
+    $base_url = "http://localhost/Alpha/" . "uploads/" . $imagemcompleta;
 
 
-    // Mover a imagem carregando para o diretório de destino
-    if(move_uploaded_file($_FILES['imagem']['tmp_name'], $target_file)) {
-        echo"<p>imagem" . basename($imagem) . "foi carregada.</p>";
-    } else {
-        echo"<p>Falha ao carregar a imagem.</p>";
-    }
+    move_uploaded_file($imagem, $target_file);
 
-    try {
-        $sql = 'INSERT INTO PRODUTOS(nome, descricao, preco, imagem, url_imagem) VALUES (:nome, :descricao, :preco, :imagem, :url_imagem)';
+    $sql = 'INSERT INTO PRODUTOS(nome, descricao, preco, imagem, url_imagem) VALUES (:nome, :descricao, :preco, :imagem, :url_imagem)';
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
-        $stmt->bindParam(':preco', $preco, PDO::PARAM_STR);
         $stmt->bindParam(':descricao', $descricao, PDO::PARAM_STR);
+        $stmt->bindParam(':preco', $preco, PDO::PARAM_STR);
         $stmt->bindParam(':imagem', $target_file, PDO::PARAM_STR);
-        $stmt->bindParam(':url_imagem', $imagem, PDO::PARAM_STR);
+        $stmt->bindParam(':url_imagem', $base_url, PDO::PARAM_STR);
 
         $stmt->execute();
 
-        echo "<p style='color: green'>Produto cadastrado com sucesso.</p>";
-    } catch(PDOException $e) {
-        echo "<p style='color: red'>Erro ao cadastrar produto: " . $e->getMessage() . ".</p>";
-    }
-
+        header('Location: listar_produto.php');
+        exit();
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,43 +57,45 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid text-center">
-		<h1>Cadastro de produto</h1>
-	</div>
+        <h1>Cadastro de produto</h1>
+    </div>
 
-	<div class="container">
-		<form action="cadastrar_produto.php" method="post" style="max-width: 500px; margin: 0 auto;" enctype="multipart/">
-			<div class="form-group">
-				<label for="nome">Nome:</label>
-				<input type="text" name="nome_cliente" class="form-control" name="nome" id="nome" placeholder="Nome">
-			</div>
-			<div class="form-group">
-				<label for="descricao">Descrição:</label>
+    <div class="container">
+        <form action="cadastrar_produto.php" method="POST" style="max-width: 500px; margin: 0 auto;" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="nome">Nome:</label>
+                <input type="text" class="form-control" name="nome" id="nome" placeholder="Nome">
+            </div>
+            <div class="form-group">
+                <label for="descricao">Descrição:</label>
                 <textarea name="descricao" class="form-control" id="descricao" placeholder="Descrição" required></textarea>
-			</div>
-			<div class="form-group">
-				<label for="preco">Preço:</label>
-				<input type="number" name="preco" class="form-control" id="preco" placeholder="Preço" step=".0.01" required>
-			</div>
-			<div class="form-group">
-				<label for="imagem">Imagem</label>
-				<input type="file" name="imagem" id="imagem" class="form-control">
-			</div>
-			<div class="form-group">
-				<label for="url_imagem">URL da Imagem:</label>
-				<input type="text" name="url_imagem" id="url_imagem" class="form-control">
-			</div>
-			<div class="text-center" style="margin-top: 10px;">
-            <button type="button" class="btn btn-secondary">
-                <a href="painel_admin.php">Voltar ao Painel de Administrador</a>
-            </button>
-				<button type="submit" class="btn btn-primary">Cadastrar Produto</button>
-			</div>
-		</form>
-	</div>
+            </div>
+            <div class="form-group">
+                <label for="preco">Preço:</label>
+                <input type="text" name="preco" placeholder="R$0,00" class="form-control" id="preco" required>
+            </div>
+            <div class="form-group">
+                <label for="imagem">Imagem</label>
+                <input type="file" name="imagem" id="imagem" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="url_imagem">URL da Imagem:</label>
+                <input type="text" name="url_imagem" id="url_imagem" class="form-control" readonly>
+            </div>
+            <div class="text-center" style="margin-top: 10px;">
+                <button type="button" class="btn btn-secondary">
+                    <a href="painel_admin.php">Voltar ao Painel de Administrador</a>
+                </button>
+                <button type="submit" class="btn btn-primary">Cadastrar Produto</button>
+            </div>
+        </form>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
 </body>
-</html> 
+
+</html>
